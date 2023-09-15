@@ -1,4 +1,4 @@
-# Handy-Signatur Cient Demo 
+# Handy-Signatur Client Demo 
 
 > Running on Android
 
