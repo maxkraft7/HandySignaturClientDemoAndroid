@@ -3,6 +3,7 @@ package wien.technikum.mio.app.kraft.signapp
 import android.annotation.SuppressLint
 import android.content.ContentValues.TAG
 import android.content.Context
+import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.util.Base64
@@ -31,6 +32,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation.NavHostController
@@ -91,6 +93,15 @@ fun SignatureWebviewSection(context: Context, filepath: Uri, modifier: Modifier 
 
     val webView = remember { WebView(context) }
 
+    val sendIntent: Intent = Intent().apply {
+        action = Intent.ACTION_SEND
+        putExtra(Intent.EXTRA_TEXT, "This is my text to send.")
+        type = "text/plain"
+    }
+    val shareIntent = Intent.createChooser(sendIntent, null)
+    val context = LocalContext.current
+
+
 
     LaunchedEffect(Unit) {
         coroutineScope.launch {
@@ -111,8 +122,9 @@ fun SignatureWebviewSection(context: Context, filepath: Uri, modifier: Modifier 
     ) {
 
         if (responseHTML !== null) {
-            Text(text = responseHTML);
-            Button(onClick = { Utils.shareSignedPDF(responseHTML) }) {
+            Button(onClick = {
+                context.startActivity(Utils.intentFromHTML(responseHTML,context))
+            }) {
                 Text(text = "Share signed PDF")
             }
 

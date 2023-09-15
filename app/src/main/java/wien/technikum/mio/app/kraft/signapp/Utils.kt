@@ -3,18 +3,16 @@ package wien.technikum.mio.app.kraft.signapp
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.os.Build
 import android.text.TextUtils
 import android.util.Base64
-import android.util.Log
 import androidx.core.content.ContextCompat.startActivity
 import androidx.core.content.FileProvider
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
 import java.io.File
-import java.io.FileReader
 import java.io.InputStream
+
 
 object Utils {
 
@@ -2883,26 +2881,39 @@ object Utils {
         return FileProvider.getUriForFile(context, BuildConfig.APPLICATION_ID + ".provider", file)
     }
 
-    fun shareSignedPDF(responseHTML: String, context: Context) {
+    fun intentFromHTML(responseHTML: String, context: Context): Intent? {
         // extract base64 from response
-
         val base64payload = responseHTML
-            .substringAfter("<sl:CMSSignature>")
-            .substringBefore("</sl:CMSSignature>")
+            .substringAfter("\\u003Csl:CMSSignature>")
+            .substringBefore("\\u003C/sl:CMSSignature>")
+
         // decode base64 to file
         val decodedBytes = Base64.decode(base64payload, Base64.DEFAULT)
+
+        // todo remove file afer sharing
         val file = File(context.filesDir, "signed.pdf")
         file.writeBytes(decodedBytes)
 
-        // share created file
 
-        val shareIntent = Intent(Intent.ACTION_SEND)
-        shareIntent.putExtra(Intent.EXTRA_STREAM, file );
-        shareIntent.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
-        shareIntent.type = "application/pdf"
-        // start share intent
-        context.startActivity(Intent.createChooser(shareIntent, "share.."))
+        val shareIntent = Intent(Intent.ACTION_SEND).apply {
+            type = "application/pdf"
+            flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+            putExtra(
+                Intent.EXTRA_SUBJECT,
+                "Sharing file from the AppName"
+            )
+            putExtra(
+                Intent.EXTRA_TEXT,
+                "Sharing file from the AppName with some description"
+            )
+            val fileURI = FileProvider.getUriForFile(
+                context!!, context!!.packageName + ".provider",
+                file
+            )
+            putExtra(Intent.EXTRA_STREAM, fileURI)
+        }
 
+        return shareIntent
     }
 
 
