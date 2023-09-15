@@ -87,7 +87,7 @@ fun SignatureWebviewSection(context: Context, filepath: Uri, modifier: Modifier 
     val coroutineScope = rememberCoroutineScope();
 
     // store html that gets shown as state
-    val (generatedHTML, setGeneratedHTML) = remember { mutableStateOf<String?>(null) }
+    val (generatedBase64PDF, setGeneratedBase64PDF) = remember { mutableStateOf<String?>(null) }
     val (responseHTML, setResponseHTML) = remember { mutableStateOf<String?>(null) }
 
 
@@ -101,15 +101,11 @@ fun SignatureWebviewSection(context: Context, filepath: Uri, modifier: Modifier 
     val shareIntent = Intent.createChooser(sendIntent, null)
     val context = LocalContext.current
 
-
-
     LaunchedEffect(Unit) {
         coroutineScope.launch {
             val base64pdf = Utils.readPDFAsBase64(filepath, context)
-            val xml = Utils.constructXMLRequestWithBase64PDF(base64pdf)
 
-            setGeneratedHTML(Utils.constructHTMLPostFormWithXML(xml))
-
+            setGeneratedBase64PDF(base64pdf)
         }
     }
 
@@ -128,12 +124,10 @@ fun SignatureWebviewSection(context: Context, filepath: Uri, modifier: Modifier 
                 Text(text = "Share signed PDF")
             }
 
-        } else if (generatedHTML !== null) {
+        } else if (generatedBase64PDF !== null) {
 
-            val encodedHtml =
-                Base64.encodeToString(Utils.returnStaticHTML().toByteArray(), Base64.NO_PADDING)
 
-            // Text(generatedHTML)
+            // Text(generatedBase64PDF)
             AndroidView(
                 { webView }, modifier = Modifier
                     .fillMaxWidth()
@@ -167,13 +161,12 @@ fun SignatureWebviewSection(context: Context, filepath: Uri, modifier: Modifier 
                                 }
                             }
                         }
-
                     }
                 }
 
                 webView.loadDataWithBaseURL(
                     null,
-                    Utils.returnStaticHTML(),
+                    Utils.returnStaticHTML(generatedBase64PDF),
                     "text/html",
                     "UTF-8",
                     null
